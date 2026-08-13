@@ -7,7 +7,9 @@ describe("fallback portfolio projects", () => {
     expect(fallbackProjects.every((project) => project.githubUrl.startsWith("https://github.com/hriday-bit/"))).toBe(true);
   });
 
-  it("does not expose demo links when no live URLs are configured", () => {
-    expect(fallbackProjects.every((project) => project.liveUrl === "")).toBe(true);
+  it("exposes the deployed Solar Website demo and hides unspecified demos", () => {
+    const solarWebsite = fallbackProjects.find((project) => project.id === "solar-website");
+    expect(solarWebsite?.liveUrl).toBe("https://solar-website-api-server.vercel.app/");
+    expect(fallbackProjects.filter((project) => project.id !== "solar-website").every((project) => project.liveUrl === "")).toBe(true);
   });
 });

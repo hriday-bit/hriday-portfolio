@@ -33,6 +33,7 @@ PROJECTS: Final[list[Project]] = [
         ),
         tech=["React", "FastAPI", "PostgreSQL"],
         githubUrl="https://github.com/hriday-bit/solar-website",
+        liveUrl="https://solar-website-api-server.vercel.app/",
     ),
     Project(
         id="student-attendance-system",
