@@ -11,6 +11,7 @@ import { OpenTo } from "./components/OpenTo";
 import { Projects } from "./components/Projects";
 import { Services } from "./components/Services";
 import { Skills } from "./components/Skills";
+import { ScrollProgress } from "./components/ScrollProgress";
 import { Work } from "./components/Work";
 import { SiteContentProvider } from "./content";
 
@@ -26,7 +27,8 @@ function Portfolio() {
   const [toast, setToast] = useState<Toast>(null);
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("theme", theme); }, [theme]);
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(null), 5000); return () => window.clearTimeout(timer); }, [toast]);
-  return <SiteContentProvider><Navbar theme={theme} setTheme={setTheme} /><main><Hero /><Work /><Projects /><About /><Skills /><Services /><OpenTo /><Contact onToast={setToast} /></main><Footer /><AnimatePresence>{toast && <motion.div className={`toast toast-${toast.kind}`} role="status" aria-live="polite" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}>{toast.message}<button onClick={() => setToast(null)} aria-label="Dismiss notification"><FaTimes /></button></motion.div>}</AnimatePresence></SiteContentProvider>;
+  const changeTheme = (nextTheme: Theme) => { const transitionDocument = document as Document & { startViewTransition?: (update: () => void) => unknown }; if (transitionDocument.startViewTransition) transitionDocument.startViewTransition(() => setTheme(nextTheme)); else setTheme(nextTheme); };
+  return <SiteContentProvider><ScrollProgress /><Navbar theme={theme} setTheme={changeTheme} /><main><Hero /><Work /><Projects /><About /><Skills /><Services /><OpenTo /><Contact onToast={setToast} /></main><Footer /><AnimatePresence>{toast && <motion.div className={`toast toast-${toast.kind}`} role="status" aria-live="polite" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}>{toast.message}<button onClick={() => setToast(null)} aria-label="Dismiss notification"><FaTimes /></button></motion.div>}</AnimatePresence></SiteContentProvider>;
 }
 
 function AdminLoading() { return <main className="admin-shell"><p className="text-[var(--muted)]">Loading private area…</p></main>; }

@@ -2,6 +2,12 @@
 
 A production-ready personal portfolio monorepo built with React, Vite, TypeScript, Tailwind CSS, and FastAPI.
 
+## Motion and performance
+
+The frontend uses Framer Motion for local UI transitions and lazy-loaded GSAP with ScrollTrigger for the desktop-only project scroll sequence. Fine-pointer hover effects are disabled on touch devices, and every animation has a static `prefers-reduced-motion` fallback. The GSAP chunks load only when the desktop Projects section is eligible to animate.
+
+Lighthouse should be audited against the deployed production URL before each animation release. The August 16, 2026 audit recorded **62 Performance / 99 Accessibility** for the current deployed site and **79 Performance / 99 Accessibility** for the completed local production build. Animation changes require investigation if either score drops by more than five points.
+
 The portfolio includes recruiter and client conversion content plus a private `/admin` area for leads and editable public content. The admin panel stores data in Neon PostgreSQL and is never linked from the public navigation.
 
 ## Structure
