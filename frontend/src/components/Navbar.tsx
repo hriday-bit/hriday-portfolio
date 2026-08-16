@@ -5,7 +5,7 @@ import { GITHUB_URL, LINKEDIN_URL } from "../content";
 import { scrollToSection } from "../utils";
 import { IconLink } from "./shared";
 
-const links = ["about", "skills", "services", "projects", "contact"];
+const links = ["home", "about", "work", "projects", "skills", "services", "contact"];
 type Theme = "dark" | "light";
 
 export function Navbar({ theme, setTheme }: { theme: Theme; setTheme: (theme: Theme) => void }) {

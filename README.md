@@ -55,12 +55,12 @@ For the admin panel, create a Neon database and set its pooled PostgreSQL URL as
 1. Create a Web Service from this repository with Root Directory `backend`.
 2. Use build command `pip install -r requirements.txt`.
 3. Use start command `alembic upgrade head && python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT`.
-4. Add all values from `.env.example`, especially Neon `DATABASE_URL`, SMTP settings, admin credentials, `JWT_SECRET`, and `CORS_ORIGINS` (the Vercel URL).
+4. Add the required values from `.env.example`, especially Neon `DATABASE_URL`, admin credentials, `JWT_SECRET`, and `CORS_ORIGINS` (the Vercel URL). SMTP is not used for portfolio messages.
 
 ## API
 
 - `GET /api/health` — service health status.
 - `GET /api/projects` — portfolio project data.
-- `POST /api/contact` — validates and emails `{ name, email, message }`.
+- `POST /api/contact` — validates and persists a `{ name, message }` submission for the private Admin Leads panel.
 
 Contact submissions are stored in PostgreSQL and limited per client IP. The rate-limit counters remain in-memory and reset when a Render instance restarts. Admin-only endpoints under `/api/admin` use an httpOnly JWT cookie; open `/admin/login` directly to access them.

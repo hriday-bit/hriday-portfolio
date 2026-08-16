@@ -206,7 +206,7 @@ def contact(payload: ContactRequest, request: Request, db: Session | None = Depe
     client_ip = request.client.host if request.client else "unknown"
     if not contact_rate_limiter.allow(client_ip, settings.rate_limit_max_requests, settings.rate_limit_window_seconds): raise HTTPException(429, "Too many messages. Please try again later.")
     persist_contact(payload, db)
-    return ContactResponse(success=True, message="Message sent successfully!")
+    return ContactResponse(success=True, message="Message saved successfully!")
 
 
 @app.post("/api/admin/login")

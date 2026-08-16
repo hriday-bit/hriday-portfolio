@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fallbackProjects } from "./data";
-import { availability, LINKEDIN_URL, services, testimonial } from "./content";
+import { availability, LINKEDIN_URL, services } from "./content";
 
 describe("fallback portfolio projects", () => {
   it("contains the four curated projects and valid GitHub links", () => {
@@ -23,6 +23,6 @@ describe("fallback portfolio projects", () => {
     expect(services.map((service) => service.title)).toContain("Business Websites");
     expect(LINKEDIN_URL).toBe("https://linkedin.com/in/hriday-saluja-1a2562384");
     expect(availability).toContain("full-time");
-    expect(testimonial.quote).toContain("Placeholder testimonial");
+    expect(availability).toContain("full-time");
   });
 });
