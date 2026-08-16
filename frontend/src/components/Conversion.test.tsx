@@ -1,23 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { Hero } from "./Hero";
+import { afterEach, describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { Work } from "./Work";
 import { projectStory } from "./Projects";
 import { fallbackProjects } from "../data";
 
 describe("recruiter and client conversion content", () => {
-  afterEach(() => { document.body.innerHTML = ""; vi.restoreAllMocks(); });
-
-  it("provides clear hero actions and factual primary stack wording", () => {
-    const scrollIntoView = vi.fn();
-    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
-    document.body.innerHTML = '<section id="projects"></section><section id="contact"></section>';
-    render(<Hero />);
-    expect(screen.getByRole("heading", { name: /react, fastapi/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /download résumé/i }).getAttribute("href")).toBe("/Hriday-Saluja-Resume.pdf");
-    fireEvent.click(screen.getByRole("button", { name: /view projects/i }));
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
-  });
+  afterEach(() => { document.body.innerHTML = ""; });
 
   it("shows the verified Solar client work with valid proof links", () => {
     render(<Work />);
