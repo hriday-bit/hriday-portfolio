@@ -6,7 +6,7 @@ import { EMAIL, GITHUB_URL, LINKEDIN_URL } from "../content";
 import type { ContactPayload } from "../types";
 import { SectionHeading } from "./shared";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 type Toast = { kind: "success" | "error"; message: string } | null;
 
 export function Contact({ onToast }: { onToast: (toast: Toast) => void }) {

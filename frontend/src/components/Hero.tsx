@@ -1,10 +1,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { FaArrowDown, FaExternalLinkAlt, FaEnvelope, FaGithub, FaLinkedin } from "react-icons/fa";
-import { availability, EMAIL, GITHUB_URL, LINKEDIN_URL } from "../content";
+import { EMAIL, GITHUB_URL, LINKEDIN_URL, useSiteContent } from "../content";
 import { scrollToSection } from "../utils";
 import { IconLink } from "./shared";
 
 export function Hero() {
+  const { availability } = useSiteContent();
   const reducedMotion = useReducedMotion();
   return <section id="home" className="relative isolate overflow-hidden pb-20 pt-24 sm:pb-28 sm:pt-32"><div className="hero-orb hero-orb-one" /><div className="hero-orb hero-orb-two" />
     <motion.div className="container relative" initial={reducedMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>

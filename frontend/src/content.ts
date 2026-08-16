@@ -1,3 +1,4 @@
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
 import { FaCode, FaGlobe, FaRocket, FaServer } from "react-icons/fa";
 
 export const SITE_URL = "https://hriday-portfolio.vercel.app/";
@@ -21,3 +22,17 @@ export const testimonial = {
   name: "Client name",
   role: "Client role / company",
 };
+
+export type EditableContent = { availability: string; services: { title: string; description: string; icon: string }[]; testimonial: typeof testimonial };
+const defaultContent: EditableContent = { availability, services: services.map(({ title, description, icon }) => ({ title, description, icon: icon === FaGlobe ? "globe" : icon === FaCode ? "code" : icon === FaServer ? "server" : "rocket" })), testimonial };
+const ContentContext = createContext<EditableContent>(defaultContent);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
+export const serviceIcons = { globe: FaGlobe, code: FaCode, server: FaServer, rocket: FaRocket };
+
+export function SiteContentProvider({ children }: { children: ReactNode }) {
+  const [content, setContent] = useState(defaultContent);
+  useEffect(() => { fetch(`${API_BASE_URL}/api/content`).then((response) => response.ok ? response.json() : Promise.reject()).then((value: EditableContent) => setContent(value)).catch(() => undefined); }, []);
+  return createElement(ContentContext.Provider, { value: content }, children);
+}
+
+export function useSiteContent() { return useContext(ContentContext); }

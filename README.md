@@ -2,7 +2,7 @@
 
 A production-ready personal portfolio monorepo built with React, Vite, TypeScript, Tailwind CSS, and FastAPI.
 
-The portfolio includes recruiter and client conversion content: Services, project case-study stories, availability messaging, and a testimonial placeholder. Replace the editable availability and testimonial copy in `frontend/src/content.ts` when final copy is available.
+The portfolio includes recruiter and client conversion content plus a private `/admin` area for leads and editable public content. The admin panel stores data in Neon PostgreSQL and is never linked from the public navigation.
 
 ## Structure
 
@@ -39,21 +39,23 @@ python -m uvicorn main:app --reload
 The API runs at `http://localhost:8000`; interactive documentation is available at `/docs`.
 Set the SMTP variables in `backend/.env` before submitting contact messages. The portfolio remains usable without them, while the contact endpoint returns a clear configuration message.
 
+For the admin panel, create a Neon database and set its pooled PostgreSQL URL as `DATABASE_URL`. Generate an admin hash with `python scripts/create_password_hash.py`, then set `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and a long random `JWT_SECRET`. Run `alembic upgrade head` followed by `python seed.py` once to create and populate the tables.
+
 ## Deployment
 
 ### Vercel (frontend)
 
 1. Import this repository and set the Vercel project Root Directory to `frontend`.
 2. Keep the standard Vite build command (`npm run build`) and output directory (`dist`).
-3. Set `VITE_API_BASE_URL` to the public Render service URL, for example `https://hriday-portfolio-api.onrender.com`.
-4. Deploy. `vercel.json` preserves single-page application routing.
+3. Leave `VITE_API_BASE_URL` empty in production. `vercel.json` proxies `/api/*` to Render so the secure admin cookie stays first-party.
+4. Deploy. `vercel.json` preserves API and single-page application routing.
 
 ### Render (backend)
 
 1. Create a Web Service from this repository with Root Directory `backend`.
 2. Use build command `pip install -r requirements.txt`.
-3. Use start command `uvicorn main:app --host 0.0.0.0 --port $PORT`.
-4. Add all values from `.env.example`, especially SMTP settings, `TO_EMAIL`, and `CORS_ORIGINS` (the Vercel URL).
+3. Use start command `alembic upgrade head && python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT`.
+4. Add all values from `.env.example`, especially Neon `DATABASE_URL`, SMTP settings, admin credentials, `JWT_SECRET`, and `CORS_ORIGINS` (the Vercel URL).
 
 ## API
 
@@ -61,4 +63,4 @@ Set the SMTP variables in `backend/.env` before submitting contact messages. The
 - `GET /api/projects` — portfolio project data.
 - `POST /api/contact` — validates and emails `{ name, email, message }`.
 
-Contact submissions are limited per client IP. This in-memory limit resets when a Render instance restarts; use an external store if durable, multi-instance rate limiting becomes necessary.
+Contact submissions are stored in PostgreSQL and limited per client IP. The rate-limit counters remain in-memory and reset when a Render instance restarts. Admin-only endpoints under `/api/admin` use an httpOnly JWT cookie; open `/admin/login` directly to access them.
