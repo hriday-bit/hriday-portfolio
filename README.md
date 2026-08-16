@@ -39,6 +39,8 @@ python -m uvicorn main:app --reload
 The API runs at `http://localhost:8000`; interactive documentation is available at `/docs`.
 Set the SMTP variables in `backend/.env` before submitting contact messages. The portfolio remains usable without them, while the contact endpoint returns a clear configuration message.
 
+For reliable email delivery on Render's free tier, use Resend instead of SMTP: add `RESEND_API_KEY`, `RESEND_FROM_EMAIL=onboarding@resend.dev`, and `TO_EMAIL` to Render. SMTP remains supported as a fallback.
+
 For the admin panel, create a Neon database and set its pooled PostgreSQL URL as `DATABASE_URL`. Generate an admin hash with `python scripts/create_password_hash.py`, then set `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and a long random `JWT_SECRET`. Run `alembic upgrade head` followed by `python seed.py` once to create and populate the tables.
 
 ## Deployment

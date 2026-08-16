@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import smtplib
+import json
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from time import monotonic
 from typing import Any, Literal
+from urllib.request import Request as UrlRequest, urlopen
 
 import bcrypt
 import jwt
@@ -31,6 +33,8 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_pass: str | None = None
     to_email: EmailStr | None = None
+    resend_api_key: str | None = None
+    resend_from_email: EmailStr | None = None
     rate_limit_max_requests: int = Field(default=5, ge=1, le=100)
     rate_limit_window_seconds: int = Field(default=900, ge=1, le=86_400)
     admin_username: str | None = None
@@ -47,6 +51,14 @@ class Settings(BaseSettings):
     @property
     def smtp_ready(self) -> bool:
         return all((self.smtp_host, self.smtp_user, self.smtp_pass, self.to_email))
+
+    @property
+    def resend_ready(self) -> bool:
+        return all((self.resend_api_key, self.resend_from_email, self.to_email))
+
+    @property
+    def email_ready(self) -> bool:
+        return self.resend_ready or self.smtp_ready
 
     @property
     def admin_ready(self) -> bool:
@@ -190,6 +202,11 @@ def require_same_origin(request: Request) -> None:
 
 
 def send_contact_email(contact: ContactRequest) -> None:
+    if settings.resend_ready:
+        payload = json.dumps({"from": str(settings.resend_from_email), "to": [str(settings.to_email)], "subject": f"Portfolio contact from {contact.name}", "reply_to": str(contact.email), "text": f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}"}).encode()
+        request = UrlRequest("https://api.resend.com/emails", data=payload, headers={"Authorization": f"Bearer {settings.resend_api_key}", "Content-Type": "application/json"}, method="POST")
+        with urlopen(request, timeout=15): pass
+        return
     message = EmailMessage(); message["Subject"] = f"Portfolio contact from {contact.name}"; message["From"] = settings.smtp_user; message["To"] = str(settings.to_email); message["Reply-To"] = str(contact.email)
     message.set_content(f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}")
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
@@ -225,7 +242,7 @@ async def contact(payload: ContactRequest, request: Request, db: Session | None 
     client_ip = request.client.host if request.client else "unknown"
     if not contact_rate_limiter.allow(client_ip, settings.rate_limit_max_requests, settings.rate_limit_window_seconds): raise HTTPException(429, "Too many messages. Please try again later.")
     persist_contact(payload, db)
-    if not settings.smtp_ready: raise HTTPException(503, "Contact email is not configured yet. Please email Hriday directly.")
+    if not settings.email_ready: raise HTTPException(503, "Contact email is not configured yet. Please email Hriday directly.")
     try: await asyncio.to_thread(send_contact_email, payload)
     except (OSError, smtplib.SMTPException): raise HTTPException(502, "Message delivery failed. Please try again or email Hriday directly.") from None
     return ContactResponse(success=True, message="Thanks! Your message has been sent.")
