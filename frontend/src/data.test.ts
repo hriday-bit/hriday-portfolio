@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fallbackProjects } from "./data";
+import { availability, LINKEDIN_URL, services, testimonial } from "./content";
 
 describe("fallback portfolio projects", () => {
   it("contains the four curated projects and valid GitHub links", () => {
@@ -11,5 +12,17 @@ describe("fallback portfolio projects", () => {
     const solarWebsite = fallbackProjects.find((project) => project.id === "solar-website");
     expect(solarWebsite?.liveUrl).toBe("https://solar-website-api-server.vercel.app/");
     expect(fallbackProjects.filter((project) => project.id !== "solar-website").every((project) => project.liveUrl === "")).toBe(true);
+  });
+
+  it("uses Problem, Solution, and Result stories for every project", () => {
+    expect(fallbackProjects.every((project) => /Problem:.*Solution:.*Result:/.test(project.description))).toBe(true);
+  });
+
+  it("defines the recruiter and client conversion content in one editable location", () => {
+    expect(services).toHaveLength(4);
+    expect(services.map((service) => service.title)).toContain("Business Websites");
+    expect(LINKEDIN_URL).toBe("https://linkedin.com/in/hriday-saluja-1a2562384");
+    expect(availability).toContain("full-time");
+    expect(testimonial.quote).toContain("Placeholder testimonial");
   });
 });

@@ -1,0 +1,3 @@
+import { SectionHeading } from "./shared";
+
+export function OpenTo() { const options = ["Full-stack product roles", "Backend engineering roles", "Freelance web development", "Startup collaborations", "Focused MVP builds"]; return <section className="section section-muted"><div className="container"><SectionHeading eyebrow="05 / Open to" title="Let’s make the next useful thing.">I’m open to teams and projects where thoughtful engineering has a real impact.</SectionHeading><ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{options.map((option) => <li className="opportunity" key={option}><span>↗</span>{option}</li>)}</ul></div></section>; }

@@ -2,6 +2,8 @@
 
 A production-ready personal portfolio monorepo built with React, Vite, TypeScript, Tailwind CSS, and FastAPI.
 
+The portfolio includes recruiter and client conversion content: Services, project case-study stories, availability messaging, and a testimonial placeholder. Replace the editable availability and testimonial copy in `frontend/src/content.ts` when final copy is available.
+
 ## Structure
 
 ```text
