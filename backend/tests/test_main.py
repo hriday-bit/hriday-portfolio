@@ -28,30 +28,15 @@ def test_contact_validation() -> None:
     assert response.status_code == 422
 
 
-def test_contact_requires_smtp(monkeypatch) -> None:
-    monkeypatch.setattr(main.settings, "smtp_host", None)
-    response = client.post("/api/contact", json=payload)
-    assert response.status_code == 503
-    assert len(main.store.submissions) == 1
-
-
-def test_contact_sends_email(monkeypatch) -> None:
-    monkeypatch.setattr(main.settings, "smtp_host", "smtp.example.com")
-    monkeypatch.setattr(main.settings, "smtp_user", "sender@example.com")
-    monkeypatch.setattr(main.settings, "smtp_pass", "secret")
-    monkeypatch.setattr(main.settings, "to_email", "recipient@example.com")
-    monkeypatch.setattr(main, "send_contact_email", lambda _: None)
+def test_contact_persists_without_email_configuration() -> None:
     response = client.post("/api/contact", json=payload)
     assert response.status_code == 200
     assert response.json()["success"] is True
+    assert "saved" in response.json()["message"]
+    assert len(main.store.submissions) == 1
 
 
 def test_contact_rate_limit(monkeypatch) -> None:
-    monkeypatch.setattr(main.settings, "smtp_host", "smtp.example.com")
-    monkeypatch.setattr(main.settings, "smtp_user", "sender@example.com")
-    monkeypatch.setattr(main.settings, "smtp_pass", "secret")
-    monkeypatch.setattr(main.settings, "to_email", "recipient@example.com")
-    monkeypatch.setattr(main, "send_contact_email", lambda _: None)
     monkeypatch.setattr(main.settings, "rate_limit_max_requests", 1)
     assert client.post("/api/contact", json=payload).status_code == 200
     assert client.post("/api/contact", json=payload).status_code == 429

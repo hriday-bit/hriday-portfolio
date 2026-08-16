@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-import asyncio
-import smtplib
-import json
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 from time import monotonic
 from typing import Any, Literal
-from urllib.request import Request as UrlRequest, urlopen
 
 import bcrypt
 import jwt
@@ -28,13 +23,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     cors_origins: str = "http://localhost:5173"
     database_url: str | None = None
-    smtp_host: str | None = None
-    smtp_port: int = 587
-    smtp_user: str | None = None
-    smtp_pass: str | None = None
-    to_email: EmailStr | None = None
-    resend_api_key: str | None = None
-    resend_from_email: EmailStr | None = None
     rate_limit_max_requests: int = Field(default=5, ge=1, le=100)
     rate_limit_window_seconds: int = Field(default=900, ge=1, le=86_400)
     admin_username: str | None = None
@@ -47,18 +35,6 @@ class Settings(BaseSettings):
     @property
     def allowed_origins(self) -> list[str]:
         return [origin.strip().rstrip("/") for origin in self.cors_origins.split(",") if origin.strip()]
-
-    @property
-    def smtp_ready(self) -> bool:
-        return all((self.smtp_host, self.smtp_user, self.smtp_pass, self.to_email))
-
-    @property
-    def resend_ready(self) -> bool:
-        return all((self.resend_api_key, self.resend_from_email, self.to_email))
-
-    @property
-    def email_ready(self) -> bool:
-        return self.resend_ready or self.smtp_ready
 
     @property
     def admin_ready(self) -> bool:
@@ -201,18 +177,6 @@ def require_same_origin(request: Request) -> None:
     if origin and origin.rstrip("/") not in settings.allowed_origins: raise HTTPException(403, "Request origin is not allowed.")
 
 
-def send_contact_email(contact: ContactRequest) -> None:
-    if settings.resend_ready:
-        payload = json.dumps({"from": str(settings.resend_from_email), "to": [str(settings.to_email)], "subject": f"Portfolio contact from {contact.name}", "reply_to": str(contact.email), "text": f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}"}).encode()
-        request = UrlRequest("https://api.resend.com/emails", data=payload, headers={"Authorization": f"Bearer {settings.resend_api_key}", "Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=15): pass
-        return
-    message = EmailMessage(); message["Subject"] = f"Portfolio contact from {contact.name}"; message["From"] = settings.smtp_user; message["To"] = str(settings.to_email); message["Reply-To"] = str(contact.email)
-    message.set_content(f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}")
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
-        server.starttls(); server.login(settings.smtp_user, settings.smtp_pass); server.send_message(message)
-
-
 def persist_contact(payload: ContactRequest, db: Session | None) -> None:
     if db:
         db.add(ContactSubmission(name=payload.name, email=str(payload.email), message=payload.message)); db.commit()
@@ -238,14 +202,11 @@ def get_content(db: Session | None = Depends(get_db)) -> ContentPayload:
 
 
 @app.post("/api/contact", response_model=ContactResponse)
-async def contact(payload: ContactRequest, request: Request, db: Session | None = Depends(get_db)) -> ContactResponse:
+def contact(payload: ContactRequest, request: Request, db: Session | None = Depends(get_db)) -> ContactResponse:
     client_ip = request.client.host if request.client else "unknown"
     if not contact_rate_limiter.allow(client_ip, settings.rate_limit_max_requests, settings.rate_limit_window_seconds): raise HTTPException(429, "Too many messages. Please try again later.")
     persist_contact(payload, db)
-    if not settings.email_ready: raise HTTPException(503, "Contact email is not configured yet. Please email Hriday directly.")
-    try: await asyncio.to_thread(send_contact_email, payload)
-    except (OSError, smtplib.SMTPException): raise HTTPException(502, "Message delivery failed. Please try again or email Hriday directly.") from None
-    return ContactResponse(success=True, message="Thanks! Your message has been sent.")
+    return ContactResponse(success=True, message="Thanks! Your message has been saved.")
 
 
 @app.post("/api/admin/login")
