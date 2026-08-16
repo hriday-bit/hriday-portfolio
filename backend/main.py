@@ -46,7 +46,7 @@ settings = Settings()
 
 class ContactRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
-    email: EmailStr
+    email: EmailStr | None = None
     message: str = Field(min_length=10, max_length=5000)
 
     @field_validator("name", "message")
@@ -71,7 +71,7 @@ class LoginRequest(BaseModel):
 class SubmissionResponse(BaseModel):
     id: int
     name: str
-    email: EmailStr
+    email: str
     message: str
     status: Literal["new", "read", "replied"]
     createdAt: datetime
@@ -179,9 +179,9 @@ def require_same_origin(request: Request) -> None:
 
 def persist_contact(payload: ContactRequest, db: Session | None) -> None:
     if db:
-        db.add(ContactSubmission(name=payload.name, email=str(payload.email), message=payload.message)); db.commit()
+        db.add(ContactSubmission(name=payload.name, email=str(payload.email or ""), message=payload.message)); db.commit()
     else:
-        store.submissions.append(SubmissionResponse(id=store.next_submission_id, name=payload.name, email=payload.email, message=payload.message, status="new", createdAt=datetime.now(timezone.utc))); store.next_submission_id += 1
+        store.submissions.append(SubmissionResponse(id=store.next_submission_id, name=payload.name, email=str(payload.email or ""), message=payload.message, status="new", createdAt=datetime.now(timezone.utc))); store.next_submission_id += 1
 
 
 @app.get("/api/health")

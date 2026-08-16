@@ -24,12 +24,12 @@ def test_health_and_projects() -> None:
 
 
 def test_contact_validation() -> None:
-    response = client.post("/api/contact", json={**payload, "email": "invalid"})
+    response = client.post("/api/contact", json={**payload, "name": ""})
     assert response.status_code == 422
 
 
 def test_contact_persists_without_email_configuration() -> None:
-    response = client.post("/api/contact", json=payload)
+    response = client.post("/api/contact", json={"name": payload["name"], "message": payload["message"]})
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert "saved" in response.json()["message"]
