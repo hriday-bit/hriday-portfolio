@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run --environment jsdom"
+    "test": "vitest run --environment jsdom --pool=forks --maxWorkers=1"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@vitejs/plugin-react": "latest",
     "framer-motion": "latest",
     "gsap": "^3.15.0",
@@ -17,6 +19,7 @@
     "react-dom": "^18.3.1",
     "react-icons": "latest",
     "react-router-dom": "^7.18.0",
+    "three": "^0.169.0",
     "vite": "latest"
   },
   "devDependencies": {

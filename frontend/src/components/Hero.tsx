@@ -1,9 +1,24 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { FaArrowDown, FaEnvelope, FaGithub, FaLinkedin } from "react-icons/fa";
 import { availability, EMAIL, GITHUB_URL, LINKEDIN_URL } from "../content";
 import { editorialContainer, editorialLineReveal, editorialReveal, motionTokens, supportsFinePointer } from "../motion";
 import { scrollToSection } from "../utils";
+
+const LazyHeroScene = lazy(() => import("./HeroScene"));
+
+function supportsWebGL() {
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
+export function shouldEnhanceHeroScene(reducedMotion: boolean, desktop: boolean, webGL: boolean) {
+  return !reducedMotion && desktop && webGL;
+}
 
 export function Hero() {
   const reducedMotion = useReducedMotion();
@@ -11,10 +26,20 @@ export function Hero() {
   const finePointer = useRef(false);
   const meshFrame = useRef(0);
   const pointer = useRef({ x: 0, y: 0 });
+  const canLoadScene = useRef(false);
+  const [showScene, setShowScene] = useState(false);
 
   useEffect(() => {
     finePointer.current = !reducedMotion && supportsFinePointer();
     return () => { if (meshFrame.current) window.cancelAnimationFrame(meshFrame.current); };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    const desktop = typeof window !== "undefined"
+      && window.matchMedia?.("(min-width: 1024px)").matches;
+    canLoadScene.current = shouldEnhanceHeroScene(Boolean(reducedMotion), Boolean(desktop), supportsWebGL());
+    if (!canLoadScene.current) setShowScene(false);
+    return undefined;
   }, [reducedMotion]);
 
   const updateMesh = () => {
@@ -27,6 +52,8 @@ export function Hero() {
 
   const moveMesh = (event: React.PointerEvent<HTMLElement>) => {
     if (!finePointer.current || !heroRef.current) return;
+    // Pointer movement is intentional input; unlike pointerenter it cannot be synthesized by initial page layout.
+    if (canLoadScene.current && event.pointerType === "mouse") setShowScene(true);
     const bounds = heroRef.current.getBoundingClientRect();
     pointer.current = {
       x: (event.clientX - bounds.left) / bounds.width - 0.5,
@@ -55,7 +82,8 @@ export function Hero() {
     <div className="hero-mesh" aria-hidden="true" />
     <div className="hero-orb hero-orb-one" aria-hidden="true" />
     <div className="hero-orb hero-orb-two" aria-hidden="true" />
-    <motion.div className="container relative" initial={reducedMotion ? false : "hidden"} animate="visible" variants={editorialContainer}>
+    {showScene && <Suspense fallback={null}><LazyHeroScene /></Suspense>}
+    <motion.div className="hero-content container relative" initial={reducedMotion ? false : "hidden"} animate="visible" variants={editorialContainer}>
       <motion.p className="eyebrow" variants={editorialReveal}>Full-Stack Developer {"\u00b7"} React.js {"\u00b7"} FastAPI {"\u00b7"} Spring Boot</motion.p>
       <motion.h1 className="hero-title" variants={editorialReveal}>
         <span className="hero-line-mask"><motion.span variants={editorialLineReveal}>I build products that{" "}</motion.span></span>

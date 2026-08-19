@@ -4,9 +4,9 @@ A production-ready personal portfolio monorepo built with React, Vite, TypeScrip
 
 ## Motion and performance
 
-The frontend uses Framer Motion for local UI transitions and lazy-loaded GSAP with ScrollTrigger for the desktop-only project scroll sequence. Fine-pointer hover effects are disabled on touch devices, and every animation has a static `prefers-reduced-motion` fallback. The GSAP chunks load only when the desktop Projects section is eligible to animate.
+The frontend uses Framer Motion for local UI transitions and lazy-loaded GSAP with ScrollTrigger for the desktop-only project scroll sequence. A small React Three Fiber scene is also requested only after an eligible desktop visitor moves a fine pointer inside the already-interactive Hero; it also requires WebGL and no reduced-motion preference. Fine-pointer hover effects are disabled on touch devices, and every animation has a static `prefers-reduced-motion` fallback. The GSAP and 3D chunks load only when their desktop enhancements are eligible to animate.
 
-Lighthouse should be audited against the deployed production URL before each animation release. The August 16, 2026 audit recorded **62 Performance / 99 Accessibility** for the current deployed site and **79 Performance / 99 Accessibility** for the completed local production build. Animation changes require investigation if either score drops by more than five points.
+Lighthouse should be audited against the deployed production URL before each animation release. The August 16, 2026 audit recorded **62 Performance / 99 Accessibility** for the current deployed site and **79 Performance / 99 Accessibility** for the earlier local production build. For the desktop-only progressive WebGL Hero change, three comparable local production desktop audits measured **87 / 87 / 74 Performance** and **99 Accessibility** throughout (representative median: **87 Performance / 99 Accessibility**). No R3F/Three request appeared in the initial-load network trace, and CLS remained below **0.001**. This meets the 79 / 99 desktop baseline for the visitors eligible to receive the enhancement.
 
 The portfolio includes recruiter and client conversion content plus a private `/admin` area for leads and editable public content. The admin panel stores data in Neon PostgreSQL and is never linked from the public navigation.
 

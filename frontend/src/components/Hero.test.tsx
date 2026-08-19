@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Hero } from "./Hero";
+import { Hero, shouldEnhanceHeroScene } from "./Hero";
 import { EMAIL, GITHUB_URL, LINKEDIN_URL } from "../content";
 
 describe("Hero", () => {
@@ -9,6 +9,7 @@ describe("Hero", () => {
   it("keeps the expressive headline, technical positioning, actions, and social controls", () => {
     const scrollIntoView = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     document.body.innerHTML = '<section id="projects"></section><section id="contact"></section>';
     render(<Hero />);
 
@@ -30,5 +31,12 @@ describe("Hero", () => {
     expect(linkedin.getAttribute("href")).toBe(LINKEDIN_URL);
     expect(linkedin.getAttribute("rel")).toBe("noopener noreferrer");
     expect(screen.getByRole("link", { name: "Email Hriday" }).getAttribute("href")).toBe(`mailto:${EMAIL}`);
+  });
+
+  it("keeps the optional WebGL scene out of reduced-motion, mobile, and unsupported-browser fallbacks", () => {
+    expect(shouldEnhanceHeroScene(true, true, true)).toBe(false);
+    expect(shouldEnhanceHeroScene(false, false, true)).toBe(false);
+    expect(shouldEnhanceHeroScene(false, true, false)).toBe(false);
+    expect(shouldEnhanceHeroScene(false, true, true)).toBe(true);
   });
 });
