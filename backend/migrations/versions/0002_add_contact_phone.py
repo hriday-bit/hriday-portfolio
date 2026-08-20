@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "0002_add_phone_to_contact_submissions"
+revision = "0002_add_contact_phone"
 down_revision = "0001_admin_postgres"
 branch_labels = None
 depends_on = None
