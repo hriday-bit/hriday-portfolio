@@ -11,12 +11,14 @@ type Toast = { kind: "success" | "error"; message: string } | null;
 
 export function Contact({ onToast }: { onToast: (toast: Toast) => void }) {
   const reducedMotion = useReducedMotion();
-  const [form, setForm] = useState<ContactPayload>({ name: "", message: "" });
+  const [form, setForm] = useState<ContactPayload>({ name: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<ContactPayload>>({});
   const validate = () => {
     const next: Partial<ContactPayload> = {};
     if (form.name.trim().length < 2) next.name = "Please enter your name.";
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) next.phone = "Enter a valid mobile number.";
     if (form.message.trim().length < 10) next.message = "Tell me a little more (10 characters minimum).";
     setErrors(next);
     return !Object.keys(next).length;
@@ -30,7 +32,7 @@ export function Contact({ onToast }: { onToast: (toast: Toast) => void }) {
       const response = await fetch(`${API_BASE_URL}/api/contact`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Could not save your message.");
-      setForm({ name: "", message: "" });
+      setForm({ name: "", phone: "", message: "" });
       onToast({ kind: "success", message: "Message sent successfully!" });
     } catch (error) {
       onToast({ kind: "error", message: error instanceof Error ? error.message : "Could not save your message." });
@@ -55,6 +57,7 @@ export function Contact({ onToast }: { onToast: (toast: Toast) => void }) {
       </motion.div>
       <motion.form className="glass-card p-6 sm:p-8" noValidate onSubmit={submit} initial={reducedMotion ? false : "hidden"} whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={contentReveal} transition={{ delay: motionTokens.stagger }}>
         <Field label="Name" value={form.name} error={errors.name} onChange={(value) => setForm({ ...form, name: value })} />
+        <Field label="Mobile number" value={form.phone} error={errors.phone} type="tel" autoComplete="tel" inputMode="tel" onChange={(value) => setForm({ ...form, phone: value })} />
         <Field label="Message" textarea value={form.message} error={errors.message} onChange={(value) => setForm({ ...form, message: value })} />
         <button className="button mt-2 w-full" type="submit" disabled={loading}>{loading ? "Saving message..." : "Save message"} <FaArrowUpRightFromSquare /></button>
       </motion.form>
@@ -62,8 +65,8 @@ export function Contact({ onToast }: { onToast: (toast: Toast) => void }) {
   </section>;
 }
 
-function Field({ label, value, onChange, error, textarea = false }: { label: string; value: string; onChange: (value: string) => void; error?: string; textarea?: boolean }) {
-  const id = label.toLowerCase();
+function Field({ label, value, onChange, error, textarea = false, type = "text", autoComplete, inputMode }: { label: string; value: string; onChange: (value: string) => void; error?: string; textarea?: boolean; type?: "text" | "tel"; autoComplete?: string; inputMode?: "tel" }) {
+  const id = label.toLowerCase().replace(/\s+/g, "-");
   const common = { id, value, onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value), "aria-invalid": Boolean(error), "aria-describedby": error ? `${id}-error` : undefined, className: "input" };
-  return <label className="mb-5 block text-sm font-medium text-[var(--text)]">{label}{textarea ? <textarea {...common} rows={5} /> : <input {...common} type="text" autoComplete="name" />}{error && <span id={`${id}-error`} className="field-error">{error}</span>}</label>;
+  return <label className="mb-5 block text-sm font-medium text-[var(--text)]">{label}{textarea ? <textarea {...common} rows={5} required /> : <input {...common} type={type} autoComplete={autoComplete ?? "name"} inputMode={inputMode} required />}{error && <span id={`${id}-error`} className="field-error">{error}</span>}</label>;
 }

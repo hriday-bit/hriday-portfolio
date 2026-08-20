@@ -5,7 +5,7 @@ import main
 
 
 client = TestClient(main.app, base_url="https://testserver")
-payload = {"name": "Ada Lovelace", "email": "ada@example.com", "message": "I would like to discuss a project."}
+payload = {"name": "Ada Lovelace", "email": "ada@example.com", "phone": "+91 98765 43210", "message": "I would like to discuss a project."}
 
 
 def setup_function() -> None:
@@ -26,14 +26,23 @@ def test_health_and_projects() -> None:
 def test_contact_validation() -> None:
     response = client.post("/api/contact", json={**payload, "name": ""})
     assert response.status_code == 422
+    assert client.post("/api/contact", json={**payload, "phone": "123"}).status_code == 422
 
 
-def test_contact_persists_without_email_configuration() -> None:
-    response = client.post("/api/contact", json={"name": payload["name"], "message": payload["message"]})
+def test_contact_persists_with_mobile_number() -> None:
+    response = client.post("/api/contact", json={"name": payload["name"], "phone": payload["phone"], "message": payload["message"]})
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert "saved" in response.json()["message"]
     assert len(main.store.submissions) == 1
+    assert main.store.submissions[0].phone == payload["phone"]
+
+
+def test_admin_leads_include_mobile_number(monkeypatch) -> None:
+    assert client.post("/api/contact", json=payload).status_code == 200
+    login_as_admin(monkeypatch)
+    submission = client.get("/api/admin/submissions").json()[0]
+    assert submission["phone"] == payload["phone"]
 
 
 def test_contact_rate_limit(monkeypatch) -> None:

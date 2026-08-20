@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
+import re
 from time import monotonic
 from typing import Any, Literal
 
@@ -47,6 +48,7 @@ settings = Settings()
 class ContactRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr | None = None
+    phone: str = Field(min_length=7, max_length=32)
     message: str = Field(min_length=10, max_length=5000)
 
     @field_validator("name", "message")
@@ -55,6 +57,15 @@ class ContactRequest(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError("This field cannot be blank.")
+        return value
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: str) -> str:
+        value = value.strip()
+        digits = re.sub(r"\D", "", value)
+        if not re.fullmatch(r"[0-9+().\-\s]+", value) or not 7 <= len(digits) <= 15:
+            raise ValueError("Enter a valid mobile number.")
         return value
 
 
@@ -72,6 +83,7 @@ class SubmissionResponse(BaseModel):
     id: int
     name: str
     email: str
+    phone: str
     message: str
     status: Literal["new", "read", "replied"]
     createdAt: datetime
@@ -179,9 +191,9 @@ def require_same_origin(request: Request) -> None:
 
 def persist_contact(payload: ContactRequest, db: Session | None) -> None:
     if db:
-        db.add(ContactSubmission(name=payload.name, email=str(payload.email or ""), message=payload.message)); db.commit()
+        db.add(ContactSubmission(name=payload.name, email=str(payload.email or ""), phone=payload.phone, message=payload.message)); db.commit()
     else:
-        store.submissions.append(SubmissionResponse(id=store.next_submission_id, name=payload.name, email=str(payload.email or ""), message=payload.message, status="new", createdAt=datetime.now(timezone.utc))); store.next_submission_id += 1
+        store.submissions.append(SubmissionResponse(id=store.next_submission_id, name=payload.name, email=str(payload.email or ""), phone=payload.phone, message=payload.message, status="new", createdAt=datetime.now(timezone.utc))); store.next_submission_id += 1
 
 
 @app.get("/api/health")
@@ -234,7 +246,7 @@ def list_submissions(status_filter: Literal["new", "read", "replied"] | None = N
     if db:
         query = select(ContactSubmission).order_by(ContactSubmission.created_at.desc())
         if status_filter: query = query.where(ContactSubmission.status == status_filter)
-        return [SubmissionResponse(id=item.id, name=item.name, email=item.email, message=item.message, status=item.status, createdAt=item.created_at) for item in db.scalars(query).all()]
+        return [SubmissionResponse(id=item.id, name=item.name, email=item.email, phone=item.phone, message=item.message, status=item.status, createdAt=item.created_at) for item in db.scalars(query).all()]
     return [item for item in store.submissions if not status_filter or item.status == status_filter]
 
 
@@ -245,7 +257,7 @@ def update_submission(submission_id: int, payload: SubmissionUpdate, request: Re
         item = db.get(ContactSubmission, submission_id)
         if not item: raise HTTPException(404, "Submission not found.")
         item.status = payload.status; db.commit(); db.refresh(item)
-        return SubmissionResponse(id=item.id, name=item.name, email=item.email, message=item.message, status=item.status, createdAt=item.created_at)
+        return SubmissionResponse(id=item.id, name=item.name, email=item.email, phone=item.phone, message=item.message, status=item.status, createdAt=item.created_at)
     for item in store.submissions:
         if item.id == submission_id: item.status = payload.status; return item
     raise HTTPException(404, "Submission not found.")

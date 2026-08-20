@@ -8,4 +8,4 @@ export interface Project {
   featured: boolean;
 }
 
-export interface ContactPayload { name: string; message: string; }
+export interface ContactPayload { name: string; phone: string; message: string; }

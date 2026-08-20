@@ -67,6 +67,6 @@ For the admin panel, create a Neon database and set its pooled PostgreSQL URL as
 
 - `GET /api/health` — service health status.
 - `GET /api/projects` — portfolio project data.
-- `POST /api/contact` — validates and persists a `{ name, message }` submission for the private Admin Leads panel.
+- `POST /api/contact` — validates and persists a `{ name, phone, message }` submission for the private Admin Leads panel.
 
 Contact submissions are stored in PostgreSQL and limited per client IP. The rate-limit counters remain in-memory and reset when a Render instance restarts. Admin-only endpoints under `/api/admin` use an httpOnly JWT cookie; open `/admin/login` directly to access them.
